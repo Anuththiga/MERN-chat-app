@@ -1,0 +1,14 @@
+{
+  "name": "mern-chat-app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "start": "node backend/server.js"
+  },
+  "author": "anuththiga",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
