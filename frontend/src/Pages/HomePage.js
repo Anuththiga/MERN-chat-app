@@ -28,7 +28,7 @@ const HomePage = () => {
           </TabList>
           <TabPanels>
             <TabPanel>
-              {/* <Login /> */}
+              <Login />
             </TabPanel>
             <TabPanel>
               <SignUp />
