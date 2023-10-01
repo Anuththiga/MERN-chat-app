@@ -1,17 +1,65 @@
 import { Button, FormControl, FormLabel, Input, InputGroup, InputRightElement, VStack } from '@chakra-ui/react'
-import React, { useState } from 'react'
+import React, { useState } from 'react';
+import { useToast } from '@chakra-ui/react';
 
 const SignUp = () => {
     const [show, setShow] = useState(false);
+
+    const toast = useToast()
 
     const [name, setName] = useState();
     const [email, setEmail] = useState();
     const [password, setPassword] = useState();
     const [confirmpassword, setConfirmpassword] = useState();
     const [image, setImage] = useState();
+    const [imageLoading, setImageLoading] = useState(false);
 
     const handleClick = () => setShow(!show);
-    const postDetails = (pics) => {};
+    const postDetails = (img) => {
+        setImageLoading(true);
+        if(img === undefined) {
+            toast({
+                title: "Please Select an Image!",
+                status: "warning",
+                duration: 5000,
+                isClosable: true,
+                position: "bottom",
+              });
+              return;
+        }
+
+        if (img.type === "image/jpeg" || img.type === "image/png") {
+            const data = new FormData();
+
+            data.append("file", img);
+            data.append("upload_preset", "chatter-app");
+            data.append("cloud_name", "du1dwf1dp");
+            fetch("https://api.cloudinary.com/v1_1/du1dwf1dp/image/upload", {
+                method: "post",
+                body: data,
+            })
+            .then((res) => res.json())
+            .then((data) => {
+                setImage(data.url.toString());
+                console.log(data.url.toString());
+                setImageLoading(false);
+            })
+            .catch((err) => {
+                console.log(err);
+                setImageLoading(false);
+            });
+        } else {
+            toast({
+                title: "Please Select an Image!",
+                status: "warning",
+                duration: 5000,
+                isClosable: true,
+                position: "bottom",
+              });
+              setImageLoading(false);
+              return;
+        }
+    };
     const submit = () => {};
 
   return (
@@ -75,6 +123,7 @@ const SignUp = () => {
             colorScheme="blue"
             style={{ marginTop: 15 }}
             onClick={submit}
+            isLoading={imageLoading}
         >
             Sign Up
         </Button>
