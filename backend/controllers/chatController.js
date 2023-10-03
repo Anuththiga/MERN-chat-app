@@ -115,4 +115,26 @@ const createGroupChat = asyncHandler(async (req, res) => {
     }
 });
 
-module.exports = { createChat, fetchAllChats, createGroupChat };
+const renameGroupChat = asyncHandler(async (req, res) => {
+    const { chatId, chatName } = req.body;
+
+    const updatedChat = await Chat.findByIdAndUpdate(
+        chatId,
+        {
+            chatName,
+        },
+        {
+            new: true,
+        }
+    ).populate("users", "-password")
+    .populate("groupAdmin", "-password");
+
+    if(!updatedChat) {
+        res.status(404);
+        throw new Error("Chat Not Found");
+    } else {
+        res.json(updatedChat);
+    }
+});
+
+module.exports = { createChat, fetchAllChats, createGroupChat, renameGroupChat };
