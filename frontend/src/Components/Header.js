@@ -3,10 +3,18 @@ import { Avatar, Flex, Button, Menu, MenuButton, MenuList, Text, Tooltip, MenuIt
 import { BellIcon, ChevronDownIcon } from "@chakra-ui/icons";
 import { ChatState } from '../Context/ChatProvider';
 import ProfileModal from './Modal/ProfileModal';
+import { useNavigate } from 'react-router-dom';
 
 
 const Header = () => {
   const { user } = ChatState();
+
+  const navigate = useNavigate();
+
+  const logout = () => {
+    localStorage.removeItem("userInfo");
+    navigate("/");
+  }
   return (
     <>
       <Flex
@@ -50,7 +58,7 @@ const Header = () => {
                 <MenuItem>My Profile</MenuItem>
               </ProfileModal>
               <MenuDivider />
-              <MenuItem>Logout</MenuItem>
+              <MenuItem onClick={logout}>Logout</MenuItem>
             </MenuList>
           </Menu>
         </div>
