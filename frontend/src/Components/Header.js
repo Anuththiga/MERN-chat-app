@@ -2,6 +2,7 @@ import React from 'react';
 import { Avatar, Flex, Button, Menu, MenuButton, MenuList, Text, Tooltip, MenuItem, MenuDivider } from "@chakra-ui/react";
 import { BellIcon, ChevronDownIcon } from "@chakra-ui/icons";
 import { ChatState } from '../Context/ChatProvider';
+import ProfileModal from './Modal/ProfileModal';
 
 
 const Header = () => {
@@ -45,7 +46,9 @@ const Header = () => {
               />
             </MenuButton>
             <MenuList>
-              <MenuItem>My Profile</MenuItem>
+              <ProfileModal user={user}>
+                <MenuItem>My Profile</MenuItem>
+              </ProfileModal>
               <MenuDivider />
               <MenuItem>Logout</MenuItem>
             </MenuList>
