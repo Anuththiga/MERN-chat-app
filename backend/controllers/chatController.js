@@ -41,7 +41,7 @@ const createChat = asyncHandler(async (req, res) => {
             const createdChat = await Chat.create(chatData);
 
             //send this createdchat to user
-            const fullChat = await Chat.findOne({ _id: createChat._id })
+            const fullChat = await Chat.findOne({ _id: createdChat._id })
                                         .populate("users", "-password");
             
             res.status(200).send(fullChat);
