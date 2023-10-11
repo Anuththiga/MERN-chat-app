@@ -3,6 +3,7 @@ import { Box, Button, FormControl, IconButton, Input, Modal, ModalBody, ModalClo
 import React, { useState } from 'react'
 import { ChatState } from '../../Context/ChatProvider';
 import UserBadgeItem from '../Shared/UserBadgeItem';
+import axios from "axios";
 
 const UpdateGroupChatModal = ({ updateAgain, setUpdateAgain }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -16,6 +17,42 @@ const UpdateGroupChatModal = ({ updateAgain, setUpdateAgain }) => {
   const toast = useToast();
 
   const { selectedChat, setSelectedChat, user } = ChatState();
+
+  const handleRename = async () => {
+    if (!groupName) return;
+
+    try {
+      setRenameLoading(true);
+      const config = {
+        headers: {
+          Authorization: `Bearer ${user.token}`
+        }
+      };
+
+      const { data } = await axios.put("/api/chat/rename", {
+        chatId: selectedChat._id,
+        chatName: groupName,
+      },
+        config
+      );
+
+      setSelectedChat(data);
+      setUpdateAgain(!updateAgain);
+      setRenameLoading(false);
+    } catch (error) {
+      toast({
+        title: "Error Occured!",
+        description: error.response.data.message,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom",
+      });
+      setRenameLoading(false);
+    }
+    setGroupName("");
+  }
+
 
   return (
     <>
@@ -58,6 +95,7 @@ const UpdateGroupChatModal = ({ updateAgain, setUpdateAgain }) => {
                 colorScheme="teal"
                 ml={1}
                 isLoading={renameLoading}
+                onClick={handleRename}
               >
                 Update
               </Button>
