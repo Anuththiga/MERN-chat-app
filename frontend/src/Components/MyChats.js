@@ -22,7 +22,6 @@ const MyChats = ({ updateAgain }) => {
             }
             const { data } = await axios.get("api/chat", config);
             setChats(data);
-            console.log(data);
         } catch (error) {
             toast({
                 title: "Error Occured!",
