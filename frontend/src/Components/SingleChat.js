@@ -7,12 +7,17 @@ import ProfileModal from './Modal/ProfileModal';
 import UpdateGroupChatModal from './Modal/UpdateGroupChatModal';
 import axios from 'axios';
 import ScrollableChat from './ScrollableChat';
+import io from "socket.io-client";
+
+const ENDPOINT = "http://localhost:5000";
+var socket, selectedChatCompare;
 
 const SingleChat = ({ updateAgain, setUpdateAgain }) => {
     const [messages, setMessages] = useState([]);
     const [loading, setLoading] = useState(false);
     const [newMessage, setNewMessage] = useState("");
     const [isTyping, setIsTyping] = useState(false);
+    const [socketConnected, setSocketConnected] = useState(false);
 
     const toast = useToast();
 
@@ -34,7 +39,7 @@ const SingleChat = ({ updateAgain, setUpdateAgain }) => {
 
             setMessages(data);
             setLoading(false);
-
+            socket.emit("join chat", selectedChat._id);
         } catch (error) {
             toast({
                 title: "Error Occured!",
@@ -46,6 +51,22 @@ const SingleChat = ({ updateAgain, setUpdateAgain }) => {
               });
         }
     };
+
+    useEffect(() => {
+        socket = io(ENDPOINT);
+        socket.emit("setup", user);
+        socket.on("connected", () => setSocketConnected(true));
+    });
+
+    useEffect(() => {
+        socket.on("message received", (newMessageReceived) => {
+            if(!selectedChatCompare || selectedChatCompare._id !== newMessageReceived.chat._id) {
+                //give notification
+            } else {
+                setMessages([...messages, newMessageReceived]);
+            }
+        })
+    })
     
     
     const typingHandler = (e) => {
@@ -68,7 +89,7 @@ const SingleChat = ({ updateAgain, setUpdateAgain }) => {
                 },
                 config
                 );
-
+                socket.emit("new message", data);
                 setMessages([...messages, data]);
             } catch (error) {
                 toast({
@@ -85,6 +106,7 @@ const SingleChat = ({ updateAgain, setUpdateAgain }) => {
 
     useEffect(() => {
         fetchMessages();
+        selectedChatCompare = selectedChat;
     }, [selectedChat]);
     console.log(messages)
 
@@ -151,7 +173,7 @@ const SingleChat = ({ updateAgain, setUpdateAgain }) => {
                         scrollbarWidth: "none" 
                     }}
                 >
-                    {/* <ScrollableChat messages={messages} /> */}
+                    <ScrollableChat messages={messages} />
                 </div>
             )}
             <FormControl
