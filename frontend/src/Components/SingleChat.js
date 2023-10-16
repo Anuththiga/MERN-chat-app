@@ -151,7 +151,7 @@ const SingleChat = ({ updateAgain, setUpdateAgain }) => {
                         scrollbarWidth: "none" 
                     }}
                 >
-                    {/* <ScrollableChat messages={messages} /> */}
+                    <ScrollableChat messages={messages} />
                 </div>
             )}
             <FormControl
