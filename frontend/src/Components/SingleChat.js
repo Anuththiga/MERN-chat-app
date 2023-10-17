@@ -8,6 +8,8 @@ import UpdateGroupChatModal from './Modal/UpdateGroupChatModal';
 import axios from 'axios';
 import ScrollableChat from './ScrollableChat';
 import io from "socket.io-client";
+import Lottie from "lottie-react";
+import typingAnimation from "../animations/typing.json";
 
 const ENDPOINT = "http://localhost:5000";
 var socket, selectedChatCompare;
@@ -17,14 +19,15 @@ const SingleChat = ({ updateAgain, setUpdateAgain }) => {
     const [loading, setLoading] = useState(false);
     const [newMessage, setNewMessage] = useState("");
     const [isTyping, setIsTyping] = useState(false);
+    const [typing, setTyping] = useState(false);
     const [socketConnected, setSocketConnected] = useState(false);
 
     const toast = useToast();
 
     const { selectedChat, setSelectedChat, user } = ChatState();
-   
+
     const fetchMessages = async () => {
-        if(!selectedChat) return;
+        if (!selectedChat) return;
 
         try {
             const config = {
@@ -48,7 +51,7 @@ const SingleChat = ({ updateAgain, setUpdateAgain }) => {
                 duration: 5000,
                 isClosable: true,
                 position: "bottom",
-              });
+            });
         }
     };
 
@@ -56,25 +59,47 @@ const SingleChat = ({ updateAgain, setUpdateAgain }) => {
         socket = io(ENDPOINT);
         socket.emit("setup", user);
         socket.on("connected", () => setSocketConnected(true));
-    });
+        socket.on("typing", () => setIsTyping(true));
+        socket.on("stop typing", () => setIsTyping(false));
+    }, []);
 
     useEffect(() => {
         socket.on("message received", (newMessageReceived) => {
-            if(!selectedChatCompare || selectedChatCompare._id !== newMessageReceived.chat._id) {
+            if (!selectedChatCompare || selectedChatCompare._id !== newMessageReceived.chat._id) {
                 //give notification
             } else {
                 setMessages([...messages, newMessageReceived]);
             }
         })
     })
-    
-    
+
+
     const typingHandler = (e) => {
         setNewMessage(e.target.value);
-    }
+
+        if (!socketConnected) return;
+        if (!typing) {
+            setTyping(true);
+            socket.emit("typing", selectedChat._id);
+        }
+
+        let lastTypingTime = new Date().getTime();
+        var timerLength = 3000;
+        // find if the typing is completed or not
+        setTimeout(() => {
+            var timeNow = new Date().getTime();
+            var timeDiff = timeNow - lastTypingTime;
+
+            if (timeDiff >= timerLength && typing) {
+                socket.emit("stop typing", selectedChat._id);
+                setTyping(false);
+            }
+        }, timerLength)
+    };
 
     const sendMessage = async (event) => {
-        if(event.key === "Enter" && newMessage) {
+        if (event.key === "Enter" && newMessage) {
+            socket.emit("stop typing", selectedChat._id);
             try {
                 const config = {
                     headers: {
@@ -87,7 +112,7 @@ const SingleChat = ({ updateAgain, setUpdateAgain }) => {
                     content: newMessage,
                     chatId: selectedChat
                 },
-                config
+                    config
                 );
                 socket.emit("new message", data);
                 setMessages([...messages, data]);
@@ -99,7 +124,7 @@ const SingleChat = ({ updateAgain, setUpdateAgain }) => {
                     duration: 5000,
                     isClosable: true,
                     position: "bottom",
-                  });
+                });
             }
         }
     };
@@ -111,102 +136,109 @@ const SingleChat = ({ updateAgain, setUpdateAgain }) => {
     console.log(messages)
 
     return (
-    <>
-    {selectedChat ? (
-    <>
-        <Text
-            fontSize={{ base: "28px", md: "30px" }}
-            pb={3}
-            px={2}
-            w="100%"
-            fontFamily="Work sans"
-            display="flex"
-            justifyContent={{ base: "space-between" }}
-            alignItems="center"
-        >
-            <IconButton
-                display={{ base: "flex", md: "none" }}
-                icon={<ArrowBackIcon />}
-                onClick={() => setSelectedChat("")}
-            />
-                {!selectedChat.isGroup ? (
-                    <>
-                        {getSender(user, selectedChat.users)}
-                        <ProfileModal user={getSenderDetails(user, selectedChat.users)} />
-                    </>
-                ) : (
-                    <>
-                    {selectedChat.chatName.toUpperCase()}
-                    <UpdateGroupChatModal 
-                        updateAgain={updateAgain}
-                        setUpdateAgain={setUpdateAgain}
-                        fetchMessages={fetchMessages}
-                    />
-                    </>
-                )}
-        </Text>
-        <Box
-            display="flex"
-            flexDir="column"
-            justifyContent="flex-end"
-            p={3}
-            bg="#e8e8e8"
-            w="100%"
-            h="100%"
-            borderRadius="lg"
-            overflowY="hidden"
-        >
-            {loading ? (
-                <Spinner 
-                    size="xl"
-                    w={20}
-                    h={20}
-                    alignSelf="center"
-                    margin="auto"
-                />
-            ) : (
-                <div
-                    style={{ 
-                        display: "flex",
-                        flexDirection: "column",
-                        overflowY: "scroll", 
-                        scrollbarWidth: "none" 
-                    }}
-                >
-                    <ScrollableChat messages={messages} />
-                </div>
-            )}
-            <FormControl
-                isRequired
-                mt={3}
-                onKeyDown={sendMessage}
-            >
-                <Input 
-                    variant="filled"
-                    bg="e0e0e0"
-                    placeholder="Enter a message..."
-                    value={newMessage}
-                    onChange={typingHandler}
-                />
-            </FormControl>
+        <>
+            {selectedChat ? (
+                <>
+                    <Text
+                        fontSize={{ base: "28px", md: "30px" }}
+                        pb={3}
+                        px={2}
+                        w="100%"
+                        fontFamily="Work sans"
+                        display="flex"
+                        justifyContent={{ base: "space-between" }}
+                        alignItems="center"
+                    >
+                        <IconButton
+                            display={{ base: "flex", md: "none" }}
+                            icon={<ArrowBackIcon />}
+                            onClick={() => setSelectedChat("")}
+                        />
+                        {!selectedChat.isGroup ? (
+                            <>
+                                {getSender(user, selectedChat.users)}
+                                <ProfileModal user={getSenderDetails(user, selectedChat.users)} />
+                            </>
+                        ) : (
+                            <>
+                                {selectedChat.chatName.toUpperCase()}
+                                <UpdateGroupChatModal
+                                    updateAgain={updateAgain}
+                                    setUpdateAgain={setUpdateAgain}
+                                    fetchMessages={fetchMessages}
+                                />
+                            </>
+                        )}
+                    </Text>
+                    <Box
+                        display="flex"
+                        flexDir="column"
+                        justifyContent="flex-end"
+                        p={3}
+                        bg="#e8e8e8"
+                        w="100%"
+                        h="100%"
+                        borderRadius="lg"
+                        overflowY="hidden"
+                    >
+                        {loading ? (
+                            <Spinner
+                                size="xl"
+                                w={20}
+                                h={20}
+                                alignSelf="center"
+                                margin="auto"
+                            />
+                        ) : (
+                            <div
+                                style={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    overflowY: "scroll",
+                                    scrollbarWidth: "none"
+                                }}
+                            >
+                                <ScrollableChat messages={messages} />
+                            </div>
+                        )}
+                        <FormControl
+                            isRequired
+                            mt={3}
+                            onKeyDown={sendMessage}
+                        >
+                            {isTyping ? (<div>
+                                <Lottie
+                                    animationData={typingAnimation}
+                                    loop={true}
+                                    style={{ width: 70, height: 50, marginBottom: 10, marginLeft: 0 }}
+                                />
+                            </div>) : (<></>)}
+                            <Input
+                                variant="filled"
+                                bg="e0e0e0"
+                                placeholder="Enter a message..."
+                                value={newMessage}
+                                onChange={typingHandler}
+                            />
+                        </FormControl>
 
-        </Box>
-    </>
+                    </Box>
+                </>
+            )
+                : (
+                    <Box
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="center"
+                        h="100%"
+                    >
+                        <Text fontFamily="Work sans" fontSize="3xl" pb={3}>
+                            Click on a user to start chatting
+                        </Text>
+                    </Box>
+                )}
+        </>
     )
-    : (
-        <Box
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            h="100%"
-        >
-            <Text fontFamily="Work sans" fontSize="3xl" pb={3}>
-                Click on a user to start chatting
-            </Text>
-        </Box>
-    )}
-    </>
-  )
 }
 
 export default SingleChat
