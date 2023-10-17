@@ -45,6 +45,10 @@ io.on("connection", (socket) => {
         console.log("User joined Room: "+ room);
     });
 
+    // create room for typing and stop typing
+    socket.on("typing", (room) => socket.in(room).emit("typing"));
+    socket.on("stop typing", (room) => socket.in(room).emit("stop typing"));
+
     // send message
     socket.on("new message", (newMessageReceived) => {
         var chat = newMessageReceived.chat;
@@ -54,6 +58,12 @@ io.on("connection", (socket) => {
             //sending the message to the created room
             socket.in(user._id).emit("message received", newMessageReceived);
         });
+    });
+
+    //cleanup the socket
+    socket.off("setup", () => {
+        console.log("USER DISCONNECTED");
+        socket.leave(userData._id);
     });
 
 })
